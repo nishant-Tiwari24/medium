@@ -116,8 +116,25 @@ app.post('/api/v1/blog', async(c) => {
 	});
 })
 
-app.put('/api/v1/blog', (c) => {
-	return c.text('signin route')
-})
+app.put('/api/v1/blog', async (c) => {
+	const userId = c.get('userId');
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env?.DATABASE_URL	,
+	}).$extends(withAccelerate());
+
+	const body = await c.req.json();
+	prisma.post.update({
+		where: {
+			id: body.id,
+			authorId: userId
+		},
+		data: {
+			title: body.title,
+			content: body.content
+		}
+	});
+
+	return c.text('updated post');
+});
 
 export default app;
