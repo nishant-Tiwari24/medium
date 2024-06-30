@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode, sign, verify } from 'hono/jwt'
+import { SignInValidation, SignupValidation, BlogPostValidation } from '@its.nishant/medium-common';
 
 const app = new Hono<{
 	Bindings: {
@@ -89,14 +90,20 @@ app.get('/api/v1/blog/:id', async (c) => {
 })
 
 app.get('/api/v1/blog/bulk', async (c) => {
-	const prisma = new PrismaClient({
-		datasourceUrl: c.env?.DATABASE_URL	,
-	}).$extends(withAccelerate());
-	
-	const posts = await prisma.post.findMany({})
+    try {
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env?.DATABASE_URL,
+        }).$extends(withAccelerate());
+        console.log('Database URL:', c.env?.DATABASE_URL)
+        const posts = await prisma.post.findMany({})
+        console.log('Posts:', posts);
+        return c.json({ hello: posts });
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+        return c.json({ error: 'Failed to fetch posts' }, 500);
+    }
+});
 
-	return c.json(posts);
-})
 
 app.post('/api/v1/blog', async(c) => {
 	const userId = c.get('userId');
